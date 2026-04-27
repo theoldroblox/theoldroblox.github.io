@@ -5,68 +5,13 @@
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
         canvas { display: block; }
-        #instructions {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: white;
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
-            pointer-events: none;
-            border-radius: 4px;
-            z-index: 10;
-        }
-        #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 18px;
-            background: rgba(0,0,0,0.8);
-            padding: 16px 24px;
-            border-radius: 6px;
-            z-index: 20;
-        }
     </style>
 </head>
 <body>
-    <div id="instructions">Right Click + Drag to Look | WASD to Move | Q/E for Vertical</div>
-    <div id="loading">Loading sky...</div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
     <script>
-        // ─────────────────────────────────────────────────────────
-        //  HOW TO SET UP YOUR SKY IMAGES FOR GITHUB PAGES
-        //
-        //  1. Create a folder called  sky/  next to this HTML file.
-        //  2. Download these 6 files from Internet Archive and put
-        //     them in that folder (keep the exact names below):
-        //
-        //  sky/sky_ft.jpg  ← https://archive.org/download/null_plainsky512/null_plainsky512_ft.jpg
-        //  sky/sky_bk.jpg  ← https://archive.org/download/null_plainsky512/null_plainsky512_bk.jpg
-        //  sky/sky_lf.jpg  ← https://archive.org/download/null_plainsky512/null_plainsky512_lf.jpg
-        //  sky/sky_rt.jpg  ← https://archive.org/download/null_plainsky512/null_plainsky512_rt.jpg
-        //  sky/sky_up.jpg  ← https://archive.org/download/null_plainsky512/null_plainsky512_up.jpg
-        //  sky/sky_dn.jpg  ← https://archive.org/download/null_plainsky512/null_plainsky512_dn.jpg
-        //
-        //  3. Commit everything (index.html + sky/ folder) to GitHub.
-        //     The skybox will load automatically on GitHub Pages.
-        // ─────────────────────────────────────────────────────────
-
-        const SKY_FACES = [
-            'sky/sky_rt.jpg',   // +X  (right)
-            'sky/sky_lf.jpg',   // -X  (left)
-            'sky/sky_up.jpg',   // +Y  (top)
-            'sky/sky_dn.jpg',   // -Y  (bottom)
-            'sky/sky_ft.jpg',   // +Z  (front)
-            'sky/sky_bk.jpg'    // -Z  (back)
-        ];
-
-        // --- Initialization ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x5EB1FF); // fallback colour while sky loads
+        scene.background = new THREE.Color(0x5EB1FF);
 
         const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 10000);
         camera.position.set(100, 60, 100);
@@ -77,24 +22,29 @@
         renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
-        // --- Load Skybox ---
         const cubeLoader = new THREE.CubeTextureLoader();
         cubeLoader.load(
-            SKY_FACES,
+            [
+                'sky/sky_rt.jpg',
+                'sky/sky_lf.jpg',
+                'sky/sky_up.jpg',
+                'sky/sky_dn.jpg',
+                'sky/sky_ft.jpg',
+                'sky/sky_bk.jpg'
+            ],
             function (cubeTexture) {
+                cubeTexture.minFilter = THREE.LinearFilter;
+                cubeTexture.magFilter = THREE.LinearFilter;
+                cubeTexture.generateMipmaps = false;
+                cubeTexture.needsUpdate = true;
                 scene.background = cubeTexture;
-                document.getElementById('loading').style.display = 'none';
             },
             undefined,
-            function (err) {
-                // If images are missing, fall back to the flat sky colour
-                console.warn('Sky images not found – using flat colour fallback.', err);
+            function () {
                 scene.background = new THREE.Color(0x5EB1FF);
-                document.getElementById('loading').style.display = 'none';
             }
         );
 
-        // --- Stud Texture ---
         function createStudTexture() {
             const size = 128;
             const canvas = document.createElement('canvas');
@@ -102,21 +52,18 @@
             canvas.height = size;
             const ctx = canvas.getContext('2d');
 
-            const baseColor   = '#3A3A3A';
-            const shadowColor = '#1A1A1A';
-
-            ctx.fillStyle = baseColor;
+            ctx.fillStyle = '#3A3A3A';
             ctx.fillRect(0, 0, size, size);
 
             const studSize = size * 0.5;
-            const offset   = (size - studSize) / 2;
-            const radius   = 6;
+            const offset = (size - studSize) / 2;
+            const radius = 6;
 
-            ctx.fillStyle = shadowColor;
+            ctx.fillStyle = '#1A1A1A';
             roundRect(ctx, offset + 4, offset + 4, studSize + 2, studSize + 2, radius);
             ctx.fill();
 
-            ctx.fillStyle = baseColor;
+            ctx.fillStyle = '#3A3A3A';
             roundRect(ctx, offset, offset, studSize, studSize, radius);
             ctx.fill();
 
@@ -146,47 +93,35 @@
             ctx.closePath();
         }
 
-        // --- Baseplate ---
-        const bpSize      = 512;
+        const bpSize = 512;
         const bpThickness = 4;
-        const geometry    = new THREE.BoxGeometry(bpSize, bpThickness, bpSize);
-
+        const geometry = new THREE.BoxGeometry(bpSize, bpThickness, bpSize);
         const studTexture = createStudTexture();
-
         const sideMaterial = new THREE.MeshStandardMaterial({ color: 0x3A3A3A, roughness: 0.8 });
-        const topMaterial  = new THREE.MeshStandardMaterial({ map: studTexture, roughness: 0.7, metalness: 0.0 });
-
-        const materials = [
-            sideMaterial, sideMaterial,
-            topMaterial,  sideMaterial,
-            sideMaterial, sideMaterial
-        ];
-
+        const topMaterial = new THREE.MeshStandardMaterial({ map: studTexture, roughness: 0.7, metalness: 0.0 });
+        const materials = [sideMaterial, sideMaterial, topMaterial, sideMaterial, sideMaterial, sideMaterial];
         const baseplate = new THREE.Mesh(geometry, materials);
         baseplate.position.y = -bpThickness / 2;
         scene.add(baseplate);
 
-        // --- Lighting ---
         const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.9);
         scene.add(hemiLight);
-
         const sun = new THREE.DirectionalLight(0xffffff, 0.6);
         sun.position.set(100, 200, 50);
         scene.add(sun);
 
-        // --- Controls ---
         let isRightMouseDown = false;
         const keys = { w: false, a: false, s: false, d: false, q: false, e: false };
-        let yaw   = -Math.PI / 4;
+        let yaw = -Math.PI / 4;
         let pitch = -Math.PI / 6;
 
         window.addEventListener('mousedown',   (e) => { if (e.button === 2) isRightMouseDown = true; });
         window.addEventListener('mouseup',     (e) => { if (e.button === 2) isRightMouseDown = false; });
         window.addEventListener('mousemove',   (e) => {
             if (isRightMouseDown) {
-                yaw   -= e.movementX * 0.002;
+                yaw -= e.movementX * 0.002;
                 pitch -= e.movementY * 0.002;
-                pitch  = Math.max(-Math.PI / 2.1, Math.min(Math.PI / 2.1, pitch));
+                pitch = Math.max(-Math.PI / 2.1, Math.min(Math.PI / 2.1, pitch));
             }
         });
         window.addEventListener('keydown',     (e) => { if (keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = true; });
@@ -196,22 +131,17 @@
         function update() {
             camera.rotation.order = 'YXZ';
             camera.rotation.set(pitch, yaw, 0);
-
             const moveSpeed = 1.5;
-            const dir       = new THREE.Vector3();
-            const forward   = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-            const right     = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-
+            const dir = new THREE.Vector3();
+            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
             if (keys.w) dir.add(forward);
             if (keys.s) dir.sub(forward);
             if (keys.a) dir.sub(right);
             if (keys.d) dir.add(right);
             if (keys.e) camera.position.y += moveSpeed;
             if (keys.q) camera.position.y -= moveSpeed;
-
-            if (dir.length() > 0) {
-                camera.position.add(dir.normalize().multiplyScalar(moveSpeed));
-            }
+            if (dir.length() > 0) camera.position.add(dir.normalize().multiplyScalar(moveSpeed));
         }
 
         function animate() {
