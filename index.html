@@ -16,150 +16,375 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
     <title>Games - ROBLOX</title>
     <style>
-        /* preserve all original styles, no changes */
+        /* ===== Scroll Arrow Styles (2016 Roblox-style navigation arrows) ===== */
+        .games-list {
+            position: relative;
+        }
+
+        .scroll-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            opacity: 0;
+            transition: opacity 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .games-list-container:hover .scroll-arrow,
+        .games-list-container .scroll-arrow:hover {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .scroll-arrow-left {
+            left: -18px;
+        }
+
+        .scroll-arrow-right {
+            right: -18px;
+        }
+
+        .scroll-arrow:hover {
+            background: #ffffff;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+        }
+
+        .scroll-arrow:active {
+            transform: translateY(-50%) scale(0.93);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        /* Chevron arrow inside the circle */
+        .scroll-arrow .chevron {
+            width: 13px;
+            height: 13px;
+            border-style: solid;
+            border-color: #555;
+            border-width: 0 2.5px 2.5px 0;
+            display: inline-block;
+            transition: border-color 0.2s ease;
+        }
+
+        .scroll-arrow:hover .chevron {
+            border-color: #222;
+        }
+
+        .scroll-arrow-left .chevron {
+            transform: rotate(135deg);
+            margin-left: 5px;
+        }
+
+        .scroll-arrow-right .chevron {
+            transform: rotate(-45deg);
+            margin-right: 5px;
+        }
+
+        /* ===== Empty card placeholder styles ===== */
+        .card-thumb.game-thumb {
+            background: #e8e8e8;
+            min-width: 160px;
+            min-height: 100px;
+            display: block;
+            border-radius: 4px;
+            object-fit: cover;
+        }
+
+        .card-item.game-item .rbx-game-title,
+        .card-item.game-item .card-title {
+            min-height: 1.2em;
+            display: block;
+        }
+
+        .card-item.game-item .rbx-game-text-notes,
+        .card-item.game-item .card-text-notes {
+            min-height: 1em;
+            display: block;
+        }
+
+        .card-item.game-item .rbx-developer {
+            min-height: 1em;
+            display: block;
+        }
+
+        /* Keep card dimensions stable even when empty */
+        .games-list .list-item.card.game {
+            min-width: 170px;
+            vertical-align: top;
+        }
+
+        .card-item.game-item .rbx-votes {
+            min-height: 28px;
+            display: block;
+        }
+
+        /* Subtle outline for empty cards */
+        .card-thumb-content.game-thumb-content .card-thumb-wrapper.game-thumb-wrapper {
+            display: block;
+            background: #f0f0f0;
+            border-radius: 4px;
+            min-height: 100px;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body id="rbx-body">
-<div id="wrap" class="wrap no-gutter-ads logged-out">
-    <!-- header unchanged -->
-    <div id="header" class="navbar-fixed-top rbx-header" role="navigation">
-        <div class="container-fluid">
-            <div class="rbx-navbar-header">
-                <div data-behavior="nav-notification" class="rbx-nav-collapse" onselectstart="return false;">
-                    <div class="rbx-nav-notification hide rbx-font-xs" title="0"></div>
-                </div>
-                <div class="navbar-header">
-                    <a class="navbar-brand" href="#"><span class="logo logo-transitional"></span></a>
-                </div>
-            </div>
-            <ul class="nav rbx-navbar hidden-xs hidden-sm col-md-4 col-lg-3">
-                <li><a href="#">Games</a></li>
-                <li><a href="#">Catalog</a></li>
-                <li><a href="#">Develop</a></li>
-                <li><a class="buy-robux" href="#">ROBUX</a></li>
-            </ul>
-            <div id="navbar-universal-search" class="navbar-left rbx-navbar-search col-xs-5 col-sm-6 col-md-3" data-behavior="univeral-search" role="search">
-                <div class="input-group rbx-input-group">
-                    <input id="navbar-search-input" class="form-control rbx-input-field" type="text" placeholder="Search" maxlength="120">
-                    <div class="input-group-btn rbx-input-group-btn">
-                        <button id="navbar-search-btn" class="rbx-input-addon-btn" type="submit">
-                            <span class="rbx-icon-nav-search"></span>
-                        </button>
+    <div id="wrap" class="wrap no-gutter-ads logged-out">
+        <!-- header unchanged -->
+        <div id="header" class="navbar-fixed-top rbx-header" role="navigation">
+            <div class="container-fluid">
+                <div class="rbx-navbar-header">
+                    <div data-behavior="nav-notification" class="rbx-nav-collapse" onselectstart="return false;">
+                        <div class="rbx-nav-notification hide rbx-font-xs" title="0"></div>
+                    </div>
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="#"><span class="logo logo-transitional"></span></a>
                     </div>
                 </div>
-            </div>
-            <div class="navbar-right rbx-navbar-right col-xs-4 col-sm-3">
-                <ul class="nav navbar-right rbx-navbar-right-nav">
-                    <li><a id="header-login" class="rbx-navbar-login">Log In</a></li>
-                    <li><a class="rbx-navbar-signup" href="#">Sign Up</a></li>
-                    <li class="rbx-navbar-right-search"><a class="rbx-menu-icon"><span class="rbx-icon-nav-search-white"></span></a></li>
+                <ul class="nav rbx-navbar hidden-xs hidden-sm col-md-4 col-lg-3">
+                    <li><a href="#">Games</a></li>
+                    <li><a href="#">Catalog</a></li>
+                    <li><a href="#">Develop</a></li>
+                    <li><a class="buy-robux" href="#">ROBUX</a></li>
                 </ul>
-            </div>
-        </div>
-    </div>
-
-    <div class="container-main">
-        <div class="content">
-            <div id="ResponsiveWrapper" class="games-responsive-wrapper games-lists-multiple">
-                <div id="GamesPageRightColumn" class="games-page-right">
-                    <div id="GamesPageRightColumnSidebar" class="sidebar-no-ad games-page-right-sidebar">
-                        <div id="GamePageAdDiv1" class="ads-container"><!-- ad placeholder --></div>
-                        <div id="GamePageAdDiv2" class="ads-container"><!-- ad placeholder --></div>
-                    </div>
-                </div>
-                <div id="GamesPageLeftColumn" class="games-page-left">
-                    <div class="col-xs-12 games-page-filters" id="FiltersAndSort">
-                        <div class="input-group-btn rbx-input-group-btn" id="SortFilter">
-                            <button type="button" class="rbx-input-dropdown-btn"><span class="rbx-selection-label">Default</span><span class="rbx-icon-down-16x16"></span></button>
-                        </div>
-                        <div class="input-group-btn rbx-input-group-btn" id="GenreFilter">
-                            <button type="button" class="rbx-input-dropdown-btn"><span class="rbx-selection-label">All</span><span class="rbx-icon-down-16x16"></span></button>
-                        </div>
-                    </div>
-                    <div id="GamesListsContainer" class="games-page-lists-container">
-                        <!-- Popular Games List (placeholder) -->
-                        <div class="games-list-container container-0 overflow-hidden">
-                            <div class="games-list-header"><h3>Popular</h3></div>
-                            <div class="games-list" style="height: 288px;">
-                                <div class="horizontally-scrollable">
-                                    <ul class="hlist games">
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t0.rbxcdn.com/e231712751c07c55b6bcfcb4d05a7aca" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Popular Game 1</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 88%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t3.rbxcdn.com/5f15cd5acd1d00bcea5f26e9d4ac7efb" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Popular Game 2</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 78%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t0.rbxcdn.com/1e9c1b8f538892d8a94a64d8c0be70ad" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Popular Game 3</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 93%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t1.rbxcdn.com/8466580bb6366de2f6f7f3263f0715f9" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Popular Game 4</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 88%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t7.rbxcdn.com/fef01eb1f07cfe3701e856a0e3140552" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Popular Game 5</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 70%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Top Earning List (placeholder) -->
-                        <div class="games-list-container container-1 overflow-hidden">
-                            <div class="games-list-header"><h3>Top Earning</h3></div>
-                            <div class="games-list" style="height: 288px;">
-                                <div class="horizontally-scrollable">
-                                    <ul class="hlist games">
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t0.rbxcdn.com/3cc7815b18a381f6ca381100bd7c86df" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Top Earning 1</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 93%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t5.rbxcdn.com/6223c709585ca629034d6a0b7dabd348" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Top Earning 2</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 83%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t7.rbxcdn.com/effb1df0b0006f3cadfb3dc022d1c48a" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Top Earning 3</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 90%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t0.rbxcdn.com/3781035ba2918d66c44eee305fde477b" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Top Earning 4</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 88%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t0.rbxcdn.com/1e9c1b8f538892d8a94a64d8c0be70ad" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Top Earning 5</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 93%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Top Rated List (placeholder) -->
-                        <div class="games-list-container container-2 overflow-hidden">
-                            <div class="games-list-header"><h3>Top Rated</h3></div>
-                            <div class="games-list" style="height: 288px;">
-                                <div class="horizontally-scrollable">
-                                    <ul class="hlist games">
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t1.rbxcdn.com/15540be95d5d89e0b15c4f5ea800fad4" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Top Rated 1</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 98%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t6.rbxcdn.com/560da26bd228b851e8c3fa0e280830d1" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Top Rated 2</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 93%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t5.rbxcdn.com/040db37d9b3e8158dc39681e5b976e26" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Top Rated 3</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 91%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t0.rbxcdn.com/cc12ee6a4db2b4e8d5df1189671f6db4" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Top Rated 4</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 93%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t0.rbxcdn.com/1e9c1b8f538892d8a94a64d8c0be70ad" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Top Rated 5</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 93%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Featured List (placeholder) -->
-                        <div class="games-list-container container-4 overflow-hidden">
-                            <div class="games-list-header"><h3>Featured</h3></div>
-                            <div class="games-list" style="height: 288px;">
-                                <div class="horizontally-scrollable">
-                                    <ul class="hlist games">
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t5.rbxcdn.com/7b812d416b45ec40da05aa7b16497129" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Featured 1</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 85%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t1.rbxcdn.com/42dec9f80c5c6f626c65161c50427b67" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Featured 2</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 74%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t5.rbxcdn.com/0276eeba68f82870cc530f00d14ad120" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Featured 3</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 84%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t1.rbxcdn.com/452bcf7f2d19cbe87a43f2a9bf233471" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Featured 4</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 75%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                        <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="https://web.archive.org/web/20160102183153im_/http://t1.rbxcdn.com/abe41aa5a39d09ff9da828a1dbd0718d" alt="Placeholder Game"></span></span><span class="rbx-text-overflow rbx-game-title card-title">Featured 5</span><span class="rbx-game-text-notes rbx-font-xs card-text-notes">0 Playing</span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 72%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs">0</div><div class="up-votes-count rbx-font-xs">0</div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs">by <cite>Placeholder</cite></span></span></li>
-                                    </ul>
-                                </div>
-                            </div>
+                <div id="navbar-universal-search" class="navbar-left rbx-navbar-search col-xs-5 col-sm-6 col-md-3" data-behavior="univeral-search" role="search">
+                    <div class="input-group rbx-input-group">
+                        <input id="navbar-search-input" class="form-control rbx-input-field" type="text" placeholder="Search" maxlength="120">
+                        <div class="input-group-btn rbx-input-group-btn">
+                            <button id="navbar-search-btn" class="rbx-input-addon-btn" type="submit">
+                                <span class="rbx-icon-nav-search"></span>
+                            </button>
                         </div>
                     </div>
                 </div>
+                <div class="navbar-right rbx-navbar-right col-xs-4 col-sm-3">
+                    <ul class="nav navbar-right rbx-navbar-right-nav">
+                        <li><a id="header-login" class="rbx-navbar-login">Log In</a></li>
+                        <li><a class="rbx-navbar-signup" href="#">Sign Up</a></li>
+                        <li class="rbx-navbar-right-search"><a class="rbx-menu-icon"><span class="rbx-icon-nav-search-white"></span></a></li>
+                    </ul>
+                </div>
             </div>
         </div>
+
+        <div class="container-main">
+            <div class="content">
+                <div id="ResponsiveWrapper" class="games-responsive-wrapper games-lists-multiple">
+                    <div id="GamesPageRightColumn" class="games-page-right">
+                        <div id="GamesPageRightColumnSidebar" class="sidebar-no-ad games-page-right-sidebar">
+                            <div id="GamePageAdDiv1" class="ads-container"><!-- ad placeholder --></div>
+                            <div id="GamePageAdDiv2" class="ads-container"><!-- ad placeholder --></div>
+                        </div>
+                    </div>
+                    <div id="GamesPageLeftColumn" class="games-page-left">
+                        <div class="col-xs-12 games-page-filters" id="FiltersAndSort">
+                            <div class="input-group-btn rbx-input-group-btn" id="SortFilter">
+                                <button type="button" class="rbx-input-dropdown-btn"><span class="rbx-selection-label">Default</span><span class="rbx-icon-down-16x16"></span></button>
+                            </div>
+                            <div class="input-group-btn rbx-input-group-btn" id="GenreFilter">
+                                <button type="button" class="rbx-input-dropdown-btn"><span class="rbx-selection-label">All</span><span class="rbx-icon-down-16x16"></span></button>
+                            </div>
+                        </div>
+                        <div id="GamesListsContainer" class="games-page-lists-container">
+
+                            <!-- Popular Games List -->
+                            <div class="games-list-container container-0 overflow-hidden">
+                                <div class="games-list-header"><h3>Popular</h3></div>
+                                <div class="games-list" style="height: 288px;">
+                                    <div class="horizontally-scrollable" id="scrollable-popular">
+                                        <ul class="hlist games">
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                        </ul>
+                                    </div>
+                                    <!-- Scroll Arrows -->
+                                    <div class="scroll-arrow scroll-arrow-left" data-target="scrollable-popular" title="Scroll left">
+                                        <span class="chevron"></span>
+                                    </div>
+                                    <div class="scroll-arrow scroll-arrow-right" data-target="scrollable-popular" title="Scroll right">
+                                        <span class="chevron"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Top Earning List -->
+                            <div class="games-list-container container-1 overflow-hidden">
+                                <div class="games-list-header"><h3>Top Earning</h3></div>
+                                <div class="games-list" style="height: 288px;">
+                                    <div class="horizontally-scrollable" id="scrollable-earning">
+                                        <ul class="hlist games">
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                        </ul>
+                                    </div>
+                                    <!-- Scroll Arrows -->
+                                    <div class="scroll-arrow scroll-arrow-left" data-target="scrollable-earning" title="Scroll left">
+                                        <span class="chevron"></span>
+                                    </div>
+                                    <div class="scroll-arrow scroll-arrow-right" data-target="scrollable-earning" title="Scroll right">
+                                        <span class="chevron"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Top Rated List -->
+                            <div class="games-list-container container-2 overflow-hidden">
+                                <div class="games-list-header"><h3>Top Rated</h3></div>
+                                <div class="games-list" style="height: 288px;">
+                                    <div class="horizontally-scrollable" id="scrollable-rated">
+                                        <ul class="hlist games">
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                        </ul>
+                                    </div>
+                                    <!-- Scroll Arrows -->
+                                    <div class="scroll-arrow scroll-arrow-left" data-target="scrollable-rated" title="Scroll left">
+                                        <span class="chevron"></span>
+                                    </div>
+                                    <div class="scroll-arrow scroll-arrow-right" data-target="scrollable-rated" title="Scroll right">
+                                        <span class="chevron"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Featured List -->
+                            <div class="games-list-container container-4 overflow-hidden">
+                                <div class="games-list-header"><h3>Featured</h3></div>
+                                <div class="games-list" style="height: 288px;">
+                                    <div class="horizontally-scrollable" id="scrollable-featured">
+                                        <ul class="hlist games">
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                            <li class="list-item card game"><span class="card-item game-item"><span class="card-thumb-content game-thumb-content"><span class="card-thumb-wrapper game-thumb-wrapper"><img class="card-thumb game-thumb" src="" alt=""></span></span><span class="rbx-text-overflow rbx-game-title card-title"></span><span class="rbx-game-text-notes rbx-font-xs card-text-notes"></span><span class="rbx-votes"><div class="vote-bar"><div class="thumbs-up"><span class="rbx-icon-thumbs-up"></span></div><div class="voting-container"><div class="votes" style="width: 0%;"></div></div><div class="thumbs-down"><span class="rbx-icon-thumbs-down"></span></div></div><div class="vote-counts"><div class="down-votes-count rbx-font-xs"></div><div class="up-votes-count rbx-font-xs"></div></div></span><span class="rbx-text-overflow rbx-developer rbx-font-xs"><cite></cite></span></span></li>
+                                        </ul>
+                                    </div>
+                                    <!-- Scroll Arrows -->
+                                    <div class="scroll-arrow scroll-arrow-left" data-target="scrollable-featured" title="Scroll left">
+                                        <span class="chevron"></span>
+                                    </div>
+                                    <div class="scroll-arrow scroll-arrow-right" data-target="scrollable-featured" title="Scroll right">
+                                        <span class="chevron"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="container-footer">
+            <div class="footer">
+                <ul class="row footer-links">
+                    <li class="col-xs-4 col-sm-2 footer-link"><a href="#"><h2>About Us</h2></a></li>
+                    <li class="col-xs-4 col-sm-2 footer-link"><a href="#"><h2>Jobs</h2></a></li>
+                    <li class="col-xs-4 col-sm-2 footer-link"><a href="#"><h2>Blog</h2></a></li>
+                    <li class="col-xs-4 col-sm-2 footer-link"><a href="#"><h2>Privacy</h2></a></li>
+                    <li class="col-xs-4 col-sm-2 footer-link"><a href="#"><h2>Parents</h2></a></li>
+                    <li class="col-xs-4 col-sm-2 footer-link"><a href="#"><h2>Help</h2></a></li>
+                </ul>
+                <p class="footer-note">
+                    ROBLOX, "Online Building Toy", characters, logos, names, and all related indicia are trademarks of <a target="_blank" href="#">ROBLOX Corporation</a>, ©2016.
+                    Patents pending. ROBLOX is not sponsored, authorized or endorsed by any producer of plastic building bricks, including The LEGO Group, MEGA Brands, and K'Nex, and no resemblance to the products of these companies is intended.
+                    Use of this site signifies your acceptance of the <a href="#" target="_blank" class="rbx-link">Terms and Conditions</a>.
+                </p>
+            </div>
+        </footer>
     </div>
 
-    <footer class="container-footer">
-        <div class="footer">
-            <ul class="row footer-links">
-                <li class="col-xs-4 col-sm-2 footer-link"><a href="#"><h2>About Us</h2></a></li>
-                <li class="col-xs-4 col-sm-2 footer-link"><a href="#"><h2>Jobs</h2></a></li>
-                <li class="col-xs-4 col-sm-2 footer-link"><a href="#"><h2>Blog</h2></a></li>
-                <li class="col-xs-4 col-sm-2 footer-link"><a href="#"><h2>Privacy</h2></a></li>
-                <li class="col-xs-4 col-sm-2 footer-link"><a href="#"><h2>Parents</h2></a></li>
-                <li class="col-xs-4 col-sm-2 footer-link"><a href="#"><h2>Help</h2></a></li>
-            </ul>
-            <p class="footer-note">
-                ROBLOX, "Online Building Toy", characters, logos, names, and all related indicia are trademarks of <a target="_blank" href="#">ROBLOX Corporation</a>, ©2016.
-                Patents pending. ROBLOX is not sponsored, authorized or endorsed by any producer of plastic building bricks, including The LEGO Group, MEGA Brands, and K'Nex, and no resemblance to the products of these companies is intended.
-                Use of this site signifies your acceptance of the <a href="#" target="_blank" class="rbx-link">Terms and Conditions</a>.
-            </p>
-        </div>
-    </footer>
-</div>
+    <script>
+        (function() {
+            // Scroll arrow functionality for all game list rows
+            var arrows = document.querySelectorAll('.scroll-arrow');
+            arrows.forEach(function(arrow) {
+                arrow.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var targetId = this.getAttribute('data-target');
+                    var scrollable = document.getElementById(targetId);
+                    if (scrollable) {
+                        var scrollAmount = 340;
+                        if (this.classList.contains('scroll-arrow-left')) {
+                            scrollable.scrollBy({
+                                left: -scrollAmount,
+                                behavior: 'smooth'
+                            });
+                        } else {
+                            scrollable.scrollBy({
+                                left: scrollAmount,
+                                behavior: 'smooth'
+                            });
+                        }
+                    }
+                });
+            });
+
+            // Optional: hide/show arrows based on scroll position
+            function updateArrowVisibility() {
+                document.querySelectorAll('.horizontally-scrollable').forEach(function(scrollable) {
+                    var container = scrollable.closest('.games-list');
+                    if (!container) return;
+                    var leftArrow = container.querySelector('.scroll-arrow-left');
+                    var rightArrow = container.querySelector('.scroll-arrow-right');
+                    if (!leftArrow || !rightArrow) return;
+
+                    var maxScroll = scrollable.scrollWidth - scrollable.clientWidth;
+                    var currentScroll = scrollable.scrollLeft;
+
+                    // At the very start
+                    if (currentScroll <= 1) {
+                        leftArrow.style.opacity = '0';
+                        leftArrow.style.pointerEvents = 'none';
+                    } else {
+                        leftArrow.style.opacity = '';
+                        leftArrow.style.pointerEvents = '';
+                    }
+
+                    // At the very end
+                    if (currentScroll >= maxScroll - 1) {
+                        rightArrow.style.opacity = '0';
+                        rightArrow.style.pointerEvents = 'none';
+                    } else {
+                        rightArrow.style.opacity = '';
+                        rightArrow.style.pointerEvents = '';
+                    }
+                });
+            }
+
+            // Listen for scroll events on all horizontally-scrollable containers
+            document.querySelectorAll('.horizontally-scrollable').forEach(function(scrollable) {
+                scrollable.addEventListener('scroll', updateArrowVisibility);
+            });
+
+            // Run once on load
+            updateArrowVisibility();
+
+            // Also update on window resize
+            window.addEventListener('resize', updateArrowVisibility);
+        })();
+    </script>
 </body>
 </html>
