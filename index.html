@@ -22,15 +22,25 @@
         renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
+        // ── SKYBOX FACE ROTATIONS (degrees) ──────────────────────
+        // Change these numbers to fix seams. Try 0, 90, 180, -90.
+        const ROT_RIGHT  =   0;
+        const ROT_LEFT   =   0;
+        const ROT_UP     =  90;   // top – clockwise once
+        const ROT_DOWN   =  90;   // bottom – clockwise once (was -90)
+        const ROT_BACK   =   0;
+        const ROT_FRONT  =   0;
+        // ─────────────────────────────────────────────────────────
+
         const BASE = 'https://raw.githubusercontent.com/theoldroblox/data/main/';
 
         const faceConfig = [
-            { url: BASE + 'null_plainsky512_rt.jpg', rot: 0   },
-            { url: BASE + 'null_plainsky512_lf.jpg', rot: 0   },
-            { url: BASE + 'null_plainsky512_up.jpg', rot: 90  },
-            { url: BASE + 'null_plainsky512_dn.jpg', rot: -90 },
-            { url: BASE + 'null_plainsky512_bk.jpg', rot: 0   },
-            { url: BASE + 'null_plainsky512_ft.jpg', rot: 0   }
+            { url: BASE + 'null_plainsky512_rt.jpg', rot: ROT_RIGHT },
+            { url: BASE + 'null_plainsky512_lf.jpg', rot: ROT_LEFT  },
+            { url: BASE + 'null_plainsky512_up.jpg', rot: ROT_UP    },
+            { url: BASE + 'null_plainsky512_dn.jpg', rot: ROT_DOWN  },
+            { url: BASE + 'null_plainsky512_bk.jpg', rot: ROT_BACK  },
+            { url: BASE + 'null_plainsky512_ft.jpg', rot: ROT_FRONT }
         ];
 
         function loadFace(cfg, callback) {
