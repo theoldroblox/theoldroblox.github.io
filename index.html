@@ -10,6 +10,21 @@
 <body>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
+        // ╔══════════════════════════════════════════════╗
+        // ║       SKYBOX UP / DOWN ROTATION (degrees)    ║
+        // ║  Change these two numbers to fix the seams.  ║
+        // ║  Valid values: 0, 90, 180, -90               ║
+        // ╚══════════════════════════════════════════════╝
+        const ROT_UP   =  0;   // ← top face rotation
+        const ROT_DOWN = 0;   // ← bottom face rotation
+
+        // ── Other skybox face rotations (change if needed) ──
+        const ROT_RIGHT =   0;
+        const ROT_LEFT  =   0;
+        const ROT_BACK  =   0;
+        const ROT_FRONT =   0;
+        // ────────────────────────────────────────────────────
+
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x5EB1FF);
 
@@ -21,15 +36,6 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
-
-        // ── SKYBOX FACE ROTATIONS (degrees) ──────────────────────
-        const ROT_RIGHT  =   0;
-        const ROT_LEFT   =   0;
-        const ROT_UP     =  90;   // top – clockwise once
-        const ROT_DOWN   = 270;   // bottom – clockwise three times
-        const ROT_BACK   =   0;
-        const ROT_FRONT  =   0;
-        // ─────────────────────────────────────────────────────────
 
         const BASE = 'https://raw.githubusercontent.com/theoldroblox/data/main/';
 
