@@ -24,14 +24,19 @@
 
         const texLoader = new THREE.TextureLoader();
 
+        texLoader.load('https://raw.githubusercontent.com/theoldroblox/data/main/skyspheremap.jpg', function (tex) {
+            tex.mapping = THREE.SphericalReflectionMapping;
+            scene.environment = tex;
+        });
+
         new THREE.CubeTextureLoader().load(
             [
-                'https://raw.githubusercontent.com/theoldroblox/moon/main/null_plainsky512_rt.jpg',
-                'https://raw.githubusercontent.com/theoldroblox/moon/main/null_plainsky512_lf.jpg',
-                'https://raw.githubusercontent.com/theoldroblox/moon/main/null_plainsky512_dn.jpg',
-                'https://raw.githubusercontent.com/theoldroblox/moon/main/null_plainsky512_up.jpg',
-                'https://raw.githubusercontent.com/theoldroblox/moon/main/null_plainsky512_bk.jpg',
-                'https://raw.githubusercontent.com/theoldroblox/moon/main/null_plainsky512_ft.jpg'
+                'https://raw.githubusercontent.com/theoldroblox/data/main/null_plainsky512_rt.jpg',
+                'https://raw.githubusercontent.com/theoldroblox/data/main/null_plainsky512_lf.jpg',
+                'https://raw.githubusercontent.com/theoldroblox/data/main/null_plainsky512_up.jpg',
+                'https://raw.githubusercontent.com/theoldroblox/data/main/null_plainsky512_dn.jpg',
+                'https://raw.githubusercontent.com/theoldroblox/data/main/null_plainsky512_bk.jpg',
+                'https://raw.githubusercontent.com/theoldroblox/data/main/null_plainsky512_ft.jpg'
             ],
             function (tex) {
                 tex.minFilter = THREE.LinearFilter;
@@ -46,7 +51,7 @@
         const SUN_DIST = 4500;
         const SUN_POS = SUN_DIR.clone().multiplyScalar(SUN_DIST);
 
-        texLoader.load('https://raw.githubusercontent.com/theoldroblox/moon/main/sun-rays.jpg', function (tex) {
+        texLoader.load('https://raw.githubusercontent.com/theoldroblox/data/main/sun-rays.jpg', function (tex) {
             const mat = new THREE.SpriteMaterial({ map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.6 });
             const sprite = new THREE.Sprite(mat);
             sprite.position.copy(SUN_POS);
@@ -54,7 +59,7 @@
             scene.add(sprite);
         });
 
-        texLoader.load('https://raw.githubusercontent.com/theoldroblox/moon/main/sun.jpg', function (tex) {
+        texLoader.load('https://raw.githubusercontent.com/theoldroblox/data/main/sun.jpg', function (tex) {
             const mat = new THREE.SpriteMaterial({ map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
             const sprite = new THREE.Sprite(mat);
             sprite.position.copy(SUN_POS);
@@ -62,7 +67,7 @@
             scene.add(sprite);
         });
 
-        texLoader.load('https://raw.githubusercontent.com/theoldroblox/moon/main/lensflare.jpg', function (tex) {
+        texLoader.load('https://raw.githubusercontent.com/theoldroblox/data/main/lensflare.jpg', function (tex) {
             const mat = new THREE.SpriteMaterial({ map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.5 });
             const sprite = new THREE.Sprite(mat);
             sprite.position.copy(SUN_POS);
@@ -71,8 +76,8 @@
         });
 
         const MOON_POS = new THREE.Vector3(-100, 150, -400).normalize().multiplyScalar(SUN_DIST);
-        texLoader.load('https://raw.githubusercontent.com/theoldroblox/moon/main/moon.jpg', function (moonTex) {
-            texLoader.load('https://raw.githubusercontent.com/theoldroblox/moon/main/moon-alpha.jpg', function (alphaTex) {
+        texLoader.load('https://raw.githubusercontent.com/theoldroblox/data/main/moon.jpg', function (moonTex) {
+            texLoader.load('https://raw.githubusercontent.com/theoldroblox/data/main/moon-alpha.jpg', function (alphaTex) {
                 const mat = new THREE.SpriteMaterial({
                     map: moonTex,
                     alphaMap: alphaTex,
