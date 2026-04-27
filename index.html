@@ -5,89 +5,16 @@
     <style>
         body { margin: 0; overflow: hidden; background: #000; }
         canvas { display: block; }
-
-        #rotator-ui {
-            position: fixed;
-            top: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 16px;
-            z-index: 100;
-            font-family: 'Segoe UI', sans-serif;
-            user-select: none;
-        }
-
-        .rot-panel {
-            background: rgba(0,0,0,0.6);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 8px;
-            padding: 8px 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #fff;
-            font-size: 13px;
-        }
-
-        .rot-panel label {
-            font-weight: 600;
-            letter-spacing: 0.03em;
-            white-space: nowrap;
-            color: #aef;
-        }
-
-        .rot-btn {
-            background: rgba(255,255,255,0.12);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: #fff;
-            border-radius: 5px;
-            width: 28px;
-            height: 28px;
-            font-size: 16px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.15s;
-            flex-shrink: 0;
-        }
-        .rot-btn:hover { background: rgba(255,255,255,0.25); }
-
-        .rot-value {
-            font-size: 15px;
-            font-weight: 700;
-            min-width: 46px;
-            text-align: center;
-            color: #ffe87c;
-        }
     </style>
 </head>
 <body>
-
-    <div id="rotator-ui">
-        <div class="rot-panel">
-            <label>UP</label>
-            <button class="rot-btn" id="up-minus">−</button>
-            <span class="rot-value" id="up-val">90°</span>
-            <button class="rot-btn" id="up-plus">+</button>
-        </div>
-        <div class="rot-panel">
-            <label>DOWN</label>
-            <button class="rot-btn" id="dn-minus">−</button>
-            <span class="rot-value" id="dn-val">-90°</span>
-            <button class="rot-btn" id="dn-plus">+</button>
-        </div>
-    </div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         // ╔══════════════════════════════════════════════╗
         // ║       SKYBOX UP / DOWN ROTATION (degrees)    ║
-        // ║  Change these two numbers to fix the seams.  ║
         // ╚══════════════════════════════════════════════╝
-        let ROT_UP   =  90;
-        let ROT_DOWN = -90;
+        const ROT_UP   = -90;
+        const ROT_DOWN =  90;
 
         // ── Other skybox face rotations ──────────────────
         const ROT_RIGHT =   0;
@@ -109,68 +36,48 @@
         document.body.appendChild(renderer.domElement);
 
         const BASE = 'https://raw.githubusercontent.com/theoldroblox/data/main/';
-        const faceUrls = [
-            BASE + 'null_plainsky512_rt.jpg',
-            BASE + 'null_plainsky512_lf.jpg',
-            BASE + 'null_plainsky512_up.jpg',
-            BASE + 'null_plainsky512_dn.jpg',
-            BASE + 'null_plainsky512_bk.jpg',
-            BASE + 'null_plainsky512_ft.jpg',
+
+        const faceConfig = [
+            { url: BASE + 'null_plainsky512_rt.jpg', rot: ROT_RIGHT },
+            { url: BASE + 'null_plainsky512_lf.jpg', rot: ROT_LEFT  },
+            { url: BASE + 'null_plainsky512_up.jpg', rot: ROT_UP    },
+            { url: BASE + 'null_plainsky512_dn.jpg', rot: ROT_DOWN  },
+            { url: BASE + 'null_plainsky512_bk.jpg', rot: ROT_BACK  },
+            { url: BASE + 'null_plainsky512_ft.jpg', rot: ROT_FRONT }
         ];
 
-        // Cache raw unrotated images so re-rotating never re-fetches
-        const rawImages = {};
-
-        function rotateSingleFace(img, rot) {
-            if (rot === 0) return img;
-            const c = document.createElement('canvas');
-            c.width = img.width; c.height = img.height;
-            const ctx = c.getContext('2d');
-            ctx.translate(c.width / 2, c.height / 2);
-            ctx.rotate(rot * Math.PI / 180);
-            ctx.drawImage(img, -img.width / 2, -img.height / 2);
-            return c;
-        }
-
-        function buildSkybox() {
-            const rots = [ROT_RIGHT, ROT_LEFT, ROT_UP, ROT_DOWN, ROT_BACK, ROT_FRONT];
-            const faces = faceUrls.map((url, i) => rotateSingleFace(rawImages[url], rots[i]));
-            const cubeTexture = new THREE.CubeTexture(faces);
-            cubeTexture.minFilter = THREE.LinearFilter;
-            cubeTexture.magFilter = THREE.LinearFilter;
-            cubeTexture.generateMipmaps = false;
-            cubeTexture.needsUpdate = true;
-            scene.background = cubeTexture;
-        }
-
-        let loadedCount = 0;
-        faceUrls.forEach(url => {
+        function loadFace(cfg, callback) {
             const img = new Image();
             img.crossOrigin = 'anonymous';
             img.onload = function () {
-                rawImages[url] = img;
-                if (++loadedCount === 6) buildSkybox();
+                if (cfg.rot === 0) { callback(img); return; }
+                const c = document.createElement('canvas');
+                c.width = img.width; c.height = img.height;
+                const ctx = c.getContext('2d');
+                ctx.translate(c.width / 2, c.height / 2);
+                ctx.rotate(cfg.rot * Math.PI / 180);
+                ctx.drawImage(img, -img.width / 2, -img.height / 2);
+                callback(c);
             };
-            img.src = url;
-        });
-
-        // ── UI wiring ────────────────────────────────────
-        const upValEl = document.getElementById('up-val');
-        const dnValEl = document.getElementById('dn-val');
-
-        function step(current, delta) {
-            // Cycles through -180, -90, 0, 90, 180 (wraps cleanly)
-            let v = ((current + delta) % 360);
-            if (v > 180)  v -= 360;
-            if (v <= -180) v += 360;
-            return v;
+            img.src = cfg.url;
         }
 
-        document.getElementById('up-plus') .addEventListener('click', () => { ROT_UP   = step(ROT_UP,    90); upValEl.textContent = ROT_UP   + '°'; buildSkybox(); });
-        document.getElementById('up-minus').addEventListener('click', () => { ROT_UP   = step(ROT_UP,   -90); upValEl.textContent = ROT_UP   + '°'; buildSkybox(); });
-        document.getElementById('dn-plus') .addEventListener('click', () => { ROT_DOWN = step(ROT_DOWN,  90); dnValEl.textContent = ROT_DOWN + '°'; buildSkybox(); });
-        document.getElementById('dn-minus').addEventListener('click', () => { ROT_DOWN = step(ROT_DOWN, -90); dnValEl.textContent = ROT_DOWN + '°'; buildSkybox(); });
-        // ─────────────────────────────────────────────────
+        const faceImages = new Array(6);
+        let loadedCount = 0;
+
+        faceConfig.forEach(function (cfg, i) {
+            loadFace(cfg, function (source) {
+                faceImages[i] = source;
+                if (++loadedCount === 6) {
+                    const cubeTexture = new THREE.CubeTexture(faceImages);
+                    cubeTexture.minFilter = THREE.LinearFilter;
+                    cubeTexture.magFilter = THREE.LinearFilter;
+                    cubeTexture.generateMipmaps = false;
+                    cubeTexture.needsUpdate = true;
+                    scene.background = cubeTexture;
+                }
+            });
+        });
 
         function createStudTexture() {
             const size = 128;
