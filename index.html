@@ -23,11 +23,11 @@
         document.body.appendChild(renderer.domElement);
 
         // ── SKYBOX FACE ROTATIONS (degrees) ──────────────────────
-        // Change these numbers to fix seams. Try 0, 90, 180, -90.
+        // Top and bottom both rotated clockwise twice (180°)
         const ROT_RIGHT  =   0;
         const ROT_LEFT   =   0;
-        const ROT_UP     =  90;   // top – clockwise once
-        const ROT_DOWN   =  90;   // bottom – clockwise once (was -90)
+        const ROT_UP     = 180;
+        const ROT_DOWN   = 180;
         const ROT_BACK   =   0;
         const ROT_FRONT  =   0;
         // ─────────────────────────────────────────────────────────
