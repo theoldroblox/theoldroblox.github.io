@@ -5,25 +5,96 @@
     <style>
         body { margin: 0; overflow: hidden; background: #000; }
         canvas { display: block; }
+
+        #rotator-ui {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 16px;
+            z-index: 100;
+            font-family: 'Segoe UI', sans-serif;
+            user-select: none;
+        }
+
+        .rot-panel {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+            font-size: 13px;
+        }
+
+        .rot-panel label {
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            white-space: nowrap;
+            color: #aef;
+        }
+
+        .rot-btn {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            border-radius: 5px;
+            width: 28px;
+            height: 28px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+            flex-shrink: 0;
+        }
+        .rot-btn:hover { background: rgba(255,255,255,0.25); }
+
+        .rot-value {
+            font-size: 15px;
+            font-weight: 700;
+            min-width: 46px;
+            text-align: center;
+            color: #ffe87c;
+        }
     </style>
 </head>
 <body>
+
+    <div id="rotator-ui">
+        <div class="rot-panel">
+            <label>UP</label>
+            <button class="rot-btn" id="up-minus">−</button>
+            <span class="rot-value" id="up-val">90°</span>
+            <button class="rot-btn" id="up-plus">+</button>
+        </div>
+        <div class="rot-panel">
+            <label>DOWN</label>
+            <button class="rot-btn" id="dn-minus">−</button>
+            <span class="rot-value" id="dn-val">-90°</span>
+            <button class="rot-btn" id="dn-plus">+</button>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         // ╔══════════════════════════════════════════════╗
         // ║       SKYBOX UP / DOWN ROTATION (degrees)    ║
         // ║  Change these two numbers to fix the seams.  ║
-        // ║  Valid values: 0, 90, 180, -90               ║
         // ╚══════════════════════════════════════════════╝
-        const ROT_UP   =  90;   // ← top face rotation
-        const ROT_DOWN = 0;   // ← bottom face rotation
+        let ROT_UP   =  90;
+        let ROT_DOWN = -90;
 
-        // ── Other skybox face rotations (change if needed) ──
+        // ── Other skybox face rotations ──────────────────
         const ROT_RIGHT =   0;
         const ROT_LEFT  =   0;
         const ROT_BACK  =   0;
         const ROT_FRONT =   0;
-        // ────────────────────────────────────────────────────
+        // ─────────────────────────────────────────────────
 
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x5EB1FF);
@@ -38,75 +109,83 @@
         document.body.appendChild(renderer.domElement);
 
         const BASE = 'https://raw.githubusercontent.com/theoldroblox/data/main/';
-
-        const faceConfig = [
-            { url: BASE + 'null_plainsky512_rt.jpg', rot: ROT_RIGHT },
-            { url: BASE + 'null_plainsky512_lf.jpg', rot: ROT_LEFT  },
-            { url: BASE + 'null_plainsky512_up.jpg', rot: ROT_UP    },
-            { url: BASE + 'null_plainsky512_dn.jpg', rot: ROT_DOWN  },
-            { url: BASE + 'null_plainsky512_bk.jpg', rot: ROT_BACK  },
-            { url: BASE + 'null_plainsky512_ft.jpg', rot: ROT_FRONT }
+        const faceUrls = [
+            BASE + 'null_plainsky512_rt.jpg',
+            BASE + 'null_plainsky512_lf.jpg',
+            BASE + 'null_plainsky512_up.jpg',
+            BASE + 'null_plainsky512_dn.jpg',
+            BASE + 'null_plainsky512_bk.jpg',
+            BASE + 'null_plainsky512_ft.jpg',
         ];
 
-        function loadFace(cfg, callback) {
+        // Cache raw unrotated images so re-rotating never re-fetches
+        const rawImages = {};
+
+        function rotateSingleFace(img, rot) {
+            if (rot === 0) return img;
+            const c = document.createElement('canvas');
+            c.width = img.width; c.height = img.height;
+            const ctx = c.getContext('2d');
+            ctx.translate(c.width / 2, c.height / 2);
+            ctx.rotate(rot * Math.PI / 180);
+            ctx.drawImage(img, -img.width / 2, -img.height / 2);
+            return c;
+        }
+
+        function buildSkybox() {
+            const rots = [ROT_RIGHT, ROT_LEFT, ROT_UP, ROT_DOWN, ROT_BACK, ROT_FRONT];
+            const faces = faceUrls.map((url, i) => rotateSingleFace(rawImages[url], rots[i]));
+            const cubeTexture = new THREE.CubeTexture(faces);
+            cubeTexture.minFilter = THREE.LinearFilter;
+            cubeTexture.magFilter = THREE.LinearFilter;
+            cubeTexture.generateMipmaps = false;
+            cubeTexture.needsUpdate = true;
+            scene.background = cubeTexture;
+        }
+
+        let loadedCount = 0;
+        faceUrls.forEach(url => {
             const img = new Image();
             img.crossOrigin = 'anonymous';
             img.onload = function () {
-                if (cfg.rot === 0) {
-                    callback(img);
-                    return;
-                }
-                const c = document.createElement('canvas');
-                c.width  = img.width;
-                c.height = img.height;
-                const ctx = c.getContext('2d');
-                ctx.translate(c.width / 2, c.height / 2);
-                ctx.rotate(cfg.rot * Math.PI / 180);
-                ctx.drawImage(img, -img.width / 2, -img.height / 2);
-                callback(c);
+                rawImages[url] = img;
+                if (++loadedCount === 6) buildSkybox();
             };
-            img.src = cfg.url;
+            img.src = url;
+        });
+
+        // ── UI wiring ────────────────────────────────────
+        const upValEl = document.getElementById('up-val');
+        const dnValEl = document.getElementById('dn-val');
+
+        function step(current, delta) {
+            // Cycles through -180, -90, 0, 90, 180 (wraps cleanly)
+            let v = ((current + delta) % 360);
+            if (v > 180)  v -= 360;
+            if (v <= -180) v += 360;
+            return v;
         }
 
-        const faceImages = new Array(6);
-        let loadedCount = 0;
-
-        faceConfig.forEach(function (cfg, i) {
-            loadFace(cfg, function (source) {
-                faceImages[i] = source;
-                loadedCount++;
-                if (loadedCount === 6) {
-                    const cubeTexture = new THREE.CubeTexture(faceImages);
-                    cubeTexture.minFilter      = THREE.LinearFilter;
-                    cubeTexture.magFilter      = THREE.LinearFilter;
-                    cubeTexture.generateMipmaps = false;
-                    cubeTexture.needsUpdate    = true;
-                    scene.background = cubeTexture;
-                }
-            });
-        });
+        document.getElementById('up-plus') .addEventListener('click', () => { ROT_UP   = step(ROT_UP,    90); upValEl.textContent = ROT_UP   + '°'; buildSkybox(); });
+        document.getElementById('up-minus').addEventListener('click', () => { ROT_UP   = step(ROT_UP,   -90); upValEl.textContent = ROT_UP   + '°'; buildSkybox(); });
+        document.getElementById('dn-plus') .addEventListener('click', () => { ROT_DOWN = step(ROT_DOWN,  90); dnValEl.textContent = ROT_DOWN + '°'; buildSkybox(); });
+        document.getElementById('dn-minus').addEventListener('click', () => { ROT_DOWN = step(ROT_DOWN, -90); dnValEl.textContent = ROT_DOWN + '°'; buildSkybox(); });
+        // ─────────────────────────────────────────────────
 
         function createStudTexture() {
             const size = 128;
             const canvas = document.createElement('canvas');
-            canvas.width = size;
-            canvas.height = size;
+            canvas.width = size; canvas.height = size;
             const ctx = canvas.getContext('2d');
             ctx.fillStyle = '#3A3A3A';
             ctx.fillRect(0, 0, size, size);
-            const studSize = size * 0.5;
-            const offset = (size - studSize) / 2;
-            const radius = 6;
+            const studSize = size * 0.5, offset = (size - studSize) / 2, radius = 6;
             ctx.fillStyle = '#1A1A1A';
-            roundRect(ctx, offset + 4, offset + 4, studSize + 2, studSize + 2, radius);
-            ctx.fill();
+            roundRect(ctx, offset+4, offset+4, studSize+2, studSize+2, radius); ctx.fill();
             ctx.fillStyle = '#3A3A3A';
-            roundRect(ctx, offset, offset, studSize, studSize, radius);
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-            ctx.lineWidth = 2;
-            roundRect(ctx, offset, offset, studSize, studSize, radius);
-            ctx.stroke();
+            roundRect(ctx, offset, offset, studSize, studSize, radius); ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2;
+            roundRect(ctx, offset, offset, studSize, studSize, radius); ctx.stroke();
             const texture = new THREE.CanvasTexture(canvas);
             texture.wrapS = THREE.RepeatWrapping;
             texture.wrapT = THREE.RepeatWrapping;
@@ -116,20 +195,18 @@
 
         function roundRect(ctx, x, y, w, h, r) {
             ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.lineTo(x + w - r, y);
-            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-            ctx.lineTo(x + w, y + h - r);
-            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-            ctx.lineTo(x + r, y + h);
-            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-            ctx.lineTo(x, y + r);
-            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
+            ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+            ctx.lineTo(x+w, y+h-r);
+            ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+            ctx.lineTo(x+r, y+h);
+            ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+            ctx.lineTo(x, y+r);
+            ctx.quadraticCurveTo(x, y, x+r, y);
             ctx.closePath();
         }
 
-        const bpSize = 512;
-        const bpThick = 4;
+        const bpSize = 512, bpThick = 4;
         const studTex = createStudTexture();
         const sideMat = new THREE.MeshStandardMaterial({ color: 0x3A3A3A, roughness: 0.8 });
         const topMat  = new THREE.MeshStandardMaterial({ map: studTex, roughness: 0.7, metalness: 0.0 });
@@ -146,31 +223,29 @@
         scene.add(sun);
 
         let isRightMouseDown = false;
-        const keys = { w: false, a: false, s: false, d: false, q: false, e: false };
-        let yaw = -Math.PI / 4;
-        let pitch = -Math.PI / 6;
+        const keys = { w:false, a:false, s:false, d:false, q:false, e:false };
+        let yaw = -Math.PI / 4, pitch = -Math.PI / 6;
 
-        window.addEventListener('mousedown',   (e) => { if (e.button === 2) isRightMouseDown = true; });
-        window.addEventListener('mouseup',     (e) => { if (e.button === 2) isRightMouseDown = false; });
-        window.addEventListener('mousemove',   (e) => {
+        window.addEventListener('mousedown',   e => { if (e.button === 2) isRightMouseDown = true; });
+        window.addEventListener('mouseup',     e => { if (e.button === 2) isRightMouseDown = false; });
+        window.addEventListener('mousemove',   e => {
             if (!isRightMouseDown) return;
             yaw   -= e.movementX * 0.002;
             pitch -= e.movementY * 0.002;
             pitch  = Math.max(-Math.PI / 2.1, Math.min(Math.PI / 2.1, pitch));
         });
-        window.addEventListener('wheel', (e) => {
+        window.addEventListener('wheel', e => {
             const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
             camera.position.addScaledVector(forward, -e.deltaY * 0.2);
         }, { passive: true });
-        window.addEventListener('keydown',     (e) => { if (e.key.toLowerCase() in keys) keys[e.key.toLowerCase()] = true; });
-        window.addEventListener('keyup',       (e) => { if (e.key.toLowerCase() in keys) keys[e.key.toLowerCase()] = false; });
-        window.addEventListener('contextmenu', (e) => e.preventDefault());
+        window.addEventListener('keydown', e => { if (e.key.toLowerCase() in keys) keys[e.key.toLowerCase()] = true; });
+        window.addEventListener('keyup',   e => { if (e.key.toLowerCase() in keys) keys[e.key.toLowerCase()] = false; });
+        window.addEventListener('contextmenu', e => e.preventDefault());
 
         function update() {
             camera.rotation.order = 'YXZ';
             camera.rotation.set(pitch, yaw, 0);
-            const speed   = 1.5;
-            const dir     = new THREE.Vector3();
+            const speed = 1.5, dir = new THREE.Vector3();
             const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
             const right   = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
             if (keys.w) dir.add(forward);
@@ -182,11 +257,7 @@
             if (dir.length() > 0) camera.position.addScaledVector(dir.normalize(), speed);
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            update();
-            renderer.render(scene, camera);
-        }
+        function animate() { requestAnimationFrame(animate); update(); renderer.render(scene, camera); }
 
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
