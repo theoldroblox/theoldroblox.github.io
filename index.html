@@ -22,14 +22,16 @@
         renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
+        const texLoader = new THREE.TextureLoader();
+
         new THREE.CubeTextureLoader().load(
             [
-                'sky/sky_rt.jpg',
-                'sky/sky_lf.jpg',
-                'sky/sky_up.jpg',
-                'sky/sky_dn.jpg',
-                'sky/sky_bk.jpg',
-                'sky/sky_ft.jpg'
+                'https://raw.githubusercontent.com/theoldroblox/moon/main/null_plainsky512_rt.jpg',
+                'https://raw.githubusercontent.com/theoldroblox/moon/main/null_plainsky512_lf.jpg',
+                'https://raw.githubusercontent.com/theoldroblox/moon/main/null_plainsky512_dn.jpg',
+                'https://raw.githubusercontent.com/theoldroblox/moon/main/null_plainsky512_up.jpg',
+                'https://raw.githubusercontent.com/theoldroblox/moon/main/null_plainsky512_bk.jpg',
+                'https://raw.githubusercontent.com/theoldroblox/moon/main/null_plainsky512_ft.jpg'
             ],
             function (tex) {
                 tex.minFilter = THREE.LinearFilter;
@@ -40,33 +42,71 @@
             }
         );
 
+        const SUN_DIR = new THREE.Vector3(100, 200, 50).normalize();
+        const SUN_DIST = 4500;
+        const SUN_POS = SUN_DIR.clone().multiplyScalar(SUN_DIST);
+
+        texLoader.load('https://raw.githubusercontent.com/theoldroblox/moon/main/sun-rays.jpg', function (tex) {
+            const mat = new THREE.SpriteMaterial({ map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.6 });
+            const sprite = new THREE.Sprite(mat);
+            sprite.position.copy(SUN_POS);
+            sprite.scale.set(900, 900, 1);
+            scene.add(sprite);
+        });
+
+        texLoader.load('https://raw.githubusercontent.com/theoldroblox/moon/main/sun.jpg', function (tex) {
+            const mat = new THREE.SpriteMaterial({ map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
+            const sprite = new THREE.Sprite(mat);
+            sprite.position.copy(SUN_POS);
+            sprite.scale.set(350, 350, 1);
+            scene.add(sprite);
+        });
+
+        texLoader.load('https://raw.githubusercontent.com/theoldroblox/moon/main/lensflare.jpg', function (tex) {
+            const mat = new THREE.SpriteMaterial({ map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.5 });
+            const sprite = new THREE.Sprite(mat);
+            sprite.position.copy(SUN_POS);
+            sprite.scale.set(180, 180, 1);
+            scene.add(sprite);
+        });
+
+        const MOON_POS = new THREE.Vector3(-100, 150, -400).normalize().multiplyScalar(SUN_DIST);
+        texLoader.load('https://raw.githubusercontent.com/theoldroblox/moon/main/moon.jpg', function (moonTex) {
+            texLoader.load('https://raw.githubusercontent.com/theoldroblox/moon/main/moon-alpha.jpg', function (alphaTex) {
+                const mat = new THREE.SpriteMaterial({
+                    map: moonTex,
+                    alphaMap: alphaTex,
+                    transparent: true,
+                    depthWrite: false
+                });
+                const sprite = new THREE.Sprite(mat);
+                sprite.position.copy(MOON_POS);
+                sprite.scale.set(220, 220, 1);
+                scene.add(sprite);
+            });
+        });
+
         function createStudTexture() {
             const size = 128;
             const canvas = document.createElement('canvas');
             canvas.width = size;
             canvas.height = size;
             const ctx = canvas.getContext('2d');
-
             ctx.fillStyle = '#3A3A3A';
             ctx.fillRect(0, 0, size, size);
-
             const studSize = size * 0.5;
             const offset = (size - studSize) / 2;
             const radius = 6;
-
             ctx.fillStyle = '#1A1A1A';
             roundRect(ctx, offset + 4, offset + 4, studSize + 2, studSize + 2, radius);
             ctx.fill();
-
             ctx.fillStyle = '#3A3A3A';
             roundRect(ctx, offset, offset, studSize, studSize, radius);
             ctx.fill();
-
             ctx.strokeStyle = 'rgba(255,255,255,0.08)';
             ctx.lineWidth = 2;
             roundRect(ctx, offset, offset, studSize, studSize, radius);
             ctx.stroke();
-
             const texture = new THREE.CanvasTexture(canvas);
             texture.wrapS = THREE.RepeatWrapping;
             texture.wrapT = THREE.RepeatWrapping;
@@ -102,7 +142,7 @@
 
         scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 0.9));
         const sun = new THREE.DirectionalLight(0xffffff, 0.6);
-        sun.position.set(100, 200, 50);
+        sun.position.copy(SUN_POS);
         scene.add(sun);
 
         let isRightMouseDown = false;
