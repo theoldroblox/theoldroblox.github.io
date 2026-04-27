@@ -22,72 +22,52 @@
         renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
-        const texLoader = new THREE.TextureLoader();
+        const BASE = 'https://raw.githubusercontent.com/theoldroblox/data/main/';
 
-        texLoader.load('https://raw.githubusercontent.com/theoldroblox/data/main/skyspheremap.jpg', function (tex) {
-            tex.mapping = THREE.SphericalReflectionMapping;
-            scene.environment = tex;
-        });
+        const faceConfig = [
+            { url: BASE + 'null_plainsky512_rt.jpg', rot: 0   },
+            { url: BASE + 'null_plainsky512_lf.jpg', rot: 0   },
+            { url: BASE + 'null_plainsky512_up.jpg', rot: 90  },
+            { url: BASE + 'null_plainsky512_dn.jpg', rot: -90 },
+            { url: BASE + 'null_plainsky512_bk.jpg', rot: 0   },
+            { url: BASE + 'null_plainsky512_ft.jpg', rot: 0   }
+        ];
 
-        new THREE.CubeTextureLoader().load(
-            [
-                'https://raw.githubusercontent.com/theoldroblox/data/main/null_plainsky512_rt.jpg',
-                'https://raw.githubusercontent.com/theoldroblox/data/main/null_plainsky512_lf.jpg',
-                'https://raw.githubusercontent.com/theoldroblox/data/main/null_plainsky512_up.jpg',
-                'https://raw.githubusercontent.com/theoldroblox/data/main/null_plainsky512_dn.jpg',
-                'https://raw.githubusercontent.com/theoldroblox/data/main/null_plainsky512_bk.jpg',
-                'https://raw.githubusercontent.com/theoldroblox/data/main/null_plainsky512_ft.jpg'
-            ],
-            function (tex) {
-                tex.minFilter = THREE.LinearFilter;
-                tex.magFilter = THREE.LinearFilter;
-                tex.generateMipmaps = false;
-                tex.needsUpdate = true;
-                scene.background = tex;
-            }
-        );
+        function loadFace(cfg, callback) {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = function () {
+                if (cfg.rot === 0) {
+                    callback(img);
+                    return;
+                }
+                const c = document.createElement('canvas');
+                c.width  = img.width;
+                c.height = img.height;
+                const ctx = c.getContext('2d');
+                ctx.translate(c.width / 2, c.height / 2);
+                ctx.rotate(cfg.rot * Math.PI / 180);
+                ctx.drawImage(img, -img.width / 2, -img.height / 2);
+                callback(c);
+            };
+            img.src = cfg.url;
+        }
 
-        const SUN_DIR = new THREE.Vector3(100, 200, 50).normalize();
-        const SUN_DIST = 4500;
-        const SUN_POS = SUN_DIR.clone().multiplyScalar(SUN_DIST);
+        const faceImages = new Array(6);
+        let loadedCount = 0;
 
-        texLoader.load('https://raw.githubusercontent.com/theoldroblox/data/main/sun-rays.jpg', function (tex) {
-            const mat = new THREE.SpriteMaterial({ map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.6 });
-            const sprite = new THREE.Sprite(mat);
-            sprite.position.copy(SUN_POS);
-            sprite.scale.set(900, 900, 1);
-            scene.add(sprite);
-        });
-
-        texLoader.load('https://raw.githubusercontent.com/theoldroblox/data/main/sun.jpg', function (tex) {
-            const mat = new THREE.SpriteMaterial({ map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
-            const sprite = new THREE.Sprite(mat);
-            sprite.position.copy(SUN_POS);
-            sprite.scale.set(350, 350, 1);
-            scene.add(sprite);
-        });
-
-        texLoader.load('https://raw.githubusercontent.com/theoldroblox/data/main/lensflare.jpg', function (tex) {
-            const mat = new THREE.SpriteMaterial({ map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.5 });
-            const sprite = new THREE.Sprite(mat);
-            sprite.position.copy(SUN_POS);
-            sprite.scale.set(180, 180, 1);
-            scene.add(sprite);
-        });
-
-        const MOON_POS = new THREE.Vector3(-100, 150, -400).normalize().multiplyScalar(SUN_DIST);
-        texLoader.load('https://raw.githubusercontent.com/theoldroblox/data/main/moon.jpg', function (moonTex) {
-            texLoader.load('https://raw.githubusercontent.com/theoldroblox/data/main/moon-alpha.jpg', function (alphaTex) {
-                const mat = new THREE.SpriteMaterial({
-                    map: moonTex,
-                    alphaMap: alphaTex,
-                    transparent: true,
-                    depthWrite: false
-                });
-                const sprite = new THREE.Sprite(mat);
-                sprite.position.copy(MOON_POS);
-                sprite.scale.set(220, 220, 1);
-                scene.add(sprite);
+        faceConfig.forEach(function (cfg, i) {
+            loadFace(cfg, function (source) {
+                faceImages[i] = source;
+                loadedCount++;
+                if (loadedCount === 6) {
+                    const cubeTexture = new THREE.CubeTexture(faceImages);
+                    cubeTexture.minFilter      = THREE.LinearFilter;
+                    cubeTexture.magFilter      = THREE.LinearFilter;
+                    cubeTexture.generateMipmaps = false;
+                    cubeTexture.needsUpdate    = true;
+                    scene.background = cubeTexture;
+                }
             });
         });
 
@@ -147,7 +127,7 @@
 
         scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 0.9));
         const sun = new THREE.DirectionalLight(0xffffff, 0.6);
-        sun.position.copy(SUN_POS);
+        sun.position.set(100, 200, 50);
         scene.add(sun);
 
         let isRightMouseDown = false;
