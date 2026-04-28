@@ -1,635 +1,261 @@
 <!DOCTYPE html>
-
 <html>
-
 <head>
-
-    <title>Roblox 2016 Baseplate</title>
-
+    <title>Roblox 2016</title>
     <style>
-
         body { margin: 0; overflow: hidden; background: #000; }
-
         canvas { display: block; }
 
-        #mode-indicator {
-
-            position: fixed;
-
-            top: 12px;
-
-            left: 50%;
-
-            transform: translateX(-50%);
-
-            color: white;
-
-            font-family: monospace;
-
-            font-size: 13px;
-
-            background: rgba(0,0,0,0.45);
-
-            padding: 4px 12px;
-
-            border-radius: 4px;
-
-            pointer-events: none;
-
-            user-select: none;
-
-        }
-
-        #click-prompt {
-
-            position: fixed;
-
+        /* Shift Lock Cursor Styling */
+        #shiftlock-cursor {
+            position: absolute;
             top: 50%;
-
             left: 50%;
-
             transform: translate(-50%, -50%);
-
-            color: white;
-
-            font-family: monospace;
-
-            font-size: 16px;
-
-            background: rgba(0,0,0,0.6);
-
-            padding: 10px 20px;
-
-            border-radius: 6px;
-
-            pointer-events: none;
-
-            user-select: none;
-
+            width: 32px; /* Standard Roblox cursor size */
+            height: 32px;
+            display: none; /* Hidden by default */
+            pointer-events: none; /* Prevents clicking the image */
+            z-index: 10;
+            image-rendering: pixelated; /* Keeps the classic look sharp */
         }
-
     </style>
-
 </head>
-
 <body>
+    <img id="shiftlock-cursor" src="https://raw.githubusercontent.com/theoldroblox/data/main/MouseLockedCursor.png">
 
-<div id="mode-indicator">PLAYER MODE — ` to free cam</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const WALK_SPEED = 16;
+        const JUMP_POWER = 50;
+        const GRAVITY = -150;
+        const CHAR_H = 5;
+        const BP_SIZE = 512;
 
-<div id="click-prompt">click to play</div>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 5000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+        // Get reference to the cursor element
+        const shiftLockIcon = document.getElementById('shiftlock-cursor');
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+        const BASE_URL = 'https://raw.githubusercontent.com/theoldroblox/data/main/';
+        const faceConfig = [
+            { url: BASE_URL + 'null_plainsky512_rt.jpg', rot: 0 },
+            { url: BASE_URL + 'null_plainsky512_lf.jpg', rot: 0 },
+            { url: BASE_URL + 'null_plainsky512_up.jpg', rot: -90 },
+            { url: BASE_URL + 'null_plainsky512_dn.jpg', rot: 90 },
+            { url: BASE_URL + 'null_plainsky512_bk.jpg', rot: 0 },
+            { url: BASE_URL + 'null_plainsky512_ft.jpg', rot: 0 }
+        ];
 
-<script>
-
-    const BASE_URL  = 'https://raw.githubusercontent.com/theoldroblox/data/main/';
-
-    const MODEL_URL = BASE_URL + 'guest_boy_roblox.glb';
-
-
-
-    const scene = new THREE.Scene();
-
-    scene.background = new THREE.Color(0x5EB1FF);
-
-
-
-    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 10000);
-
-
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-    renderer.setPixelRatio(window.devicePixelRatio);
-
-    document.body.appendChild(renderer.domElement);
-
-
-
-    // ── skybox ────────────────────────────────────────────────
-
-    const ROT_UP = -90, ROT_DOWN = 90;
-
-    const faceConfig = [
-
-        { url: BASE_URL + 'null_plainsky512_rt.jpg', rot: 0 },
-
-        { url: BASE_URL + 'null_plainsky512_lf.jpg', rot: 0 },
-
-        { url: BASE_URL + 'null_plainsky512_up.jpg', rot: ROT_UP },
-
-        { url: BASE_URL + 'null_plainsky512_dn.jpg', rot: ROT_DOWN },
-
-        { url: BASE_URL + 'null_plainsky512_bk.jpg', rot: 0 },
-
-        { url: BASE_URL + 'null_plainsky512_ft.jpg', rot: 0 }
-
-    ];
-
-    function loadFace(cfg, callback) {
-
-        const img = new Image();
-
-        img.crossOrigin = 'anonymous';
-
-        img.onload = function () {
-
-            if (cfg.rot === 0) { callback(img); return; }
-
-            const c = document.createElement('canvas');
-
-            c.width = img.width; c.height = img.height;
-
-            const ctx = c.getContext('2d');
-
-            ctx.translate(c.width / 2, c.height / 2);
-
-            ctx.rotate(cfg.rot * Math.PI / 180);
-
-            ctx.drawImage(img, -img.width / 2, -img.height / 2);
-
-            callback(c);
-
-        };
-
-        img.src = cfg.url;
-
-    }
-
-    const faceImages = new Array(6);
-
-    let skyLoaded = 0;
-
-    faceConfig.forEach(function (cfg, i) {
-
-        loadFace(cfg, function (source) {
-
-            faceImages[i] = source;
-
-            if (++skyLoaded === 6) {
-
-                const cubeTexture = new THREE.CubeTexture(faceImages);
-
-                cubeTexture.minFilter = THREE.LinearFilter;
-
-                cubeTexture.magFilter = THREE.LinearFilter;
-
-                cubeTexture.generateMipmaps = false;
-
-                cubeTexture.needsUpdate = true;
-
-                scene.background = cubeTexture;
-
-            }
-
+        const faceImages = new Array(6);
+        let loadedCount = 0;
+        faceConfig.forEach((cfg, i) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                if (cfg.rot === 0) {
+                    faceImages[i] = img;
+                } else {
+                    const c = document.createElement('canvas');
+                    c.width = img.width; c.height = img.height;
+                    const ctx = c.getContext('2d');
+                    ctx.translate(c.width / 2, c.height / 2);
+                    ctx.rotate(cfg.rot * Math.PI / 180);
+                    ctx.drawImage(img, -img.width / 2, -img.height / 2);
+                    faceImages[i] = c;
+                }
+                if (++loadedCount === 6) {
+                    const sky = new THREE.CubeTexture(faceImages);
+                    sky.needsUpdate = true;
+                    scene.background = sky;
+                }
+            };
+            img.src = cfg.url;
         });
 
-    });
-
-
-
-    // ── stud texture ──────────────────────────────────────────
-
-    function createStudTexture() {
-
-        const size = 128;
-
         const canvas = document.createElement('canvas');
-
-        canvas.width = size; canvas.height = size;
-
+        canvas.width = 128; canvas.height = 128;
         const ctx = canvas.getContext('2d');
-
-        ctx.fillStyle = '#2E6B2A'; ctx.fillRect(0, 0, size, size);
-
-        const pad = Math.floor(size * 0.25), s = size - pad * 2, x = pad, y = pad;
-
-        ctx.fillStyle = '#3A7D36'; ctx.fillRect(x, y, s, s);
-
-        ctx.fillStyle = '#4A8F45'; ctx.fillRect(x, y, s, 2); ctx.fillRect(x, y, 2, s);
-
-        ctx.fillStyle = '#1A3D18'; ctx.fillRect(x, y + s - 2, s, 2); ctx.fillRect(x + s - 2, y, 2, s);
-
-        const texture = new THREE.CanvasTexture(canvas);
-
-        texture.wrapS = THREE.RepeatWrapping;
-
-        texture.wrapT = THREE.RepeatWrapping;
-
-        texture.repeat.set(512, 512);
-
-        return texture;
-
-    }
-
-
-
-    // ── baseplate ─────────────────────────────────────────────
-
-    const BP_SIZE = 512, BP_THICK = 2.4;
-
-    const studTex = createStudTexture();
-
-    const sideMat = new THREE.MeshStandardMaterial({ color: 0x2E6B2A, roughness: 0.9 });
-
-    const topMat  = new THREE.MeshStandardMaterial({ map: studTex, roughness: 0.9, metalness: 0.0 });
-
-    const bp = new THREE.Mesh(
-
-        new THREE.BoxGeometry(BP_SIZE, BP_THICK, BP_SIZE),
-
-        [sideMat, sideMat, topMat, sideMat, sideMat, sideMat]
-
-    );
-
-    bp.position.y = -BP_THICK / 2;
-
-    scene.add(bp);
-
-
-
-    // ── lighting ──────────────────────────────────────────────
-
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x1C4A1A, 0.7));
-
-    const sun = new THREE.DirectionalLight(0xffffff, 0.5);
-
-    sun.position.set(100, 200, 50);
-
-    scene.add(sun);
-
-
-
-    // ── constants ─────────────────────────────────────────────
-
-    const PLAYER_HEIGHT = 5;    // studs
-
-    const PLAYER_SPEED  = 0.18; // studs per frame
-
-    // tight third-person: character fills the screen properly
-
-    const CAM_DIST      = 9;    // studs behind player
-
-    const CAM_HEIGHT    = 5;    // studs above player feet
-
-
-
-    // ── state ─────────────────────────────────────────────────
-
-    const playerPos  = new THREE.Vector3(0, 0, 0);
-
-    let   playerYaw  = 0;
-
-    let   camYaw     = 0;    // orbits around player with mouse X
-
-    let   camPitch   = 0.25; // mouse Y — slight downward tilt
-
-
-
-    let   playerModel = null;
-
-    let   modelFacingOffset = 0; // determined after model loads
-
-
-
-    let   playerMode  = true;
-
-    let   freeYaw     = 0;
-
-    let   freePitch   = -0.2;
-
-    let   locked      = false;
-
-
-
-    const modeEl  = document.getElementById('mode-indicator');
-
-    const prompt  = document.getElementById('click-prompt');
-
-    const keys    = { w:false, a:false, s:false, d:false, q:false, e:false };
-
-
-
-    // ── pointer lock ──────────────────────────────────────────
-
-    renderer.domElement.addEventListener('click', () => {
-
-        renderer.domElement.requestPointerLock();
-
-    });
-
-    document.addEventListener('pointerlockchange', () => {
-
-        locked = document.pointerLockElement === renderer.domElement;
-
-        prompt.style.display = locked ? 'none' : 'block';
-
-    });
-
-
-
-    // ── mouse ─────────────────────────────────────────────────
-
-    document.addEventListener('mousemove', e => {
-
-        if (!locked) return;
-
-        if (playerMode) {
-
-            camYaw   -= e.movementX * 0.003;
-
-            camPitch += e.movementY * 0.003;
-
-            camPitch  = Math.max(0.05, Math.min(0.9, camPitch));
-
-        } else {
-
-            freeYaw   -= e.movementX * 0.002;
-
-            freePitch -= e.movementY * 0.002;
-
-            freePitch  = Math.max(-Math.PI / 2.1, Math.min(Math.PI / 2.1, freePitch));
-
-        }
-
-    });
-
-
-
-    window.addEventListener('wheel', e => {
-
-        if (!locked || playerMode) return;
-
-        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-
-        camera.position.addScaledVector(forward, -e.deltaY * 0.2);
-
-    }, { passive: true });
-
-
-
-    window.addEventListener('keydown', e => {
-
-        const k = e.key.toLowerCase();
-
-        if (k in keys) keys[k] = true;
-
-        if (e.key === '`') {
-
-            playerMode = !playerMode;
-
-            modeEl.textContent = playerMode
-
-                ? 'PLAYER MODE — ` to free cam'
-
-                : 'FREE CAM — ` to player mode';
-
-            if (!playerMode) {
-
-                freeYaw   = camYaw;
-
-                freePitch = -camPitch * 0.5;
-
-            }
-
-        }
-
-    });
-
-    window.addEventListener('keyup', e => {
-
-        const k = e.key.toLowerCase();
-
-        if (k in keys) keys[k] = false;
-
-    });
-
-    window.addEventListener('contextmenu', e => e.preventDefault());
-
-
-
-    // ── load model ────────────────────────────────────────────
-
-    const loader = new THREE.GLTFLoader();
-
-    loader.load(MODEL_URL, function (gltf) {
-
-        playerModel = gltf.scene;
-
-
-
-        // scale to exactly PLAYER_HEIGHT studs
-
-        const box = new THREE.Box3().setFromObject(playerModel);
-
-        const modelH = box.max.y - box.min.y;
-
-        const s = PLAYER_HEIGHT / modelH;
-
-        playerModel.scale.setScalar(s);
-
-
-
-        // align feet to y=0
-
-        const box2 = new THREE.Box3().setFromObject(playerModel);
-
-        playerModel.position.set(playerPos.x, -box2.min.y, playerPos.z);
-
-
-
-        scene.add(playerModel);
-
-
-
-        // figure out which way the model naturally faces
-
-        // by checking its bounding box depth vs width orientation —
-
-        // easier: just try 0, and if they report walking backwards we add Math.PI
-
-        modelFacingOffset = Math.PI; // most gltf characters face +Z, three.js forward is -Z
-
-
-
-    }, undefined, e => console.error('glb error:', e));
-
-
-
-    // ── camera ────────────────────────────────────────────────
-
-    function placeCamera() {
-
-        // camera sits behind+above player at camYaw / camPitch orbit
-
-        const hDist = CAM_DIST * Math.cos(camPitch);
-
-        const vDist = CAM_DIST * Math.sin(camPitch);
-
-        // "behind" = opposite of the direction camYaw points
-
-        camera.position.set(
-
-            playerPos.x + Math.sin(camYaw) * hDist,
-
-            playerPos.y + CAM_HEIGHT + vDist,
-
-            playerPos.z + Math.cos(camYaw) * hDist
-
+        ctx.fillStyle = '#2E6B2A'; ctx.fillRect(0, 0, 128, 128);
+        ctx.fillStyle = '#3A7D36'; ctx.fillRect(32, 32, 64, 64);
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(BP_SIZE, BP_SIZE);
+
+        const bp = new THREE.Mesh(new THREE.BoxGeometry(BP_SIZE, 2.4, BP_SIZE), [
+            new THREE.MeshStandardMaterial({color: 0x2E6B2A}), new THREE.MeshStandardMaterial({color: 0x2E6B2A}),
+            new THREE.MeshStandardMaterial({map: tex}), new THREE.MeshStandardMaterial({color: 0x2E6B2A}),
+            new THREE.MeshStandardMaterial({color: 0x2E6B2A}), new THREE.MeshStandardMaterial({color: 0x2E6B2A})
+        ]);
+        bp.position.y = -1.2;
+        scene.add(bp);
+
+        const character = new THREE.Mesh(
+            new THREE.BoxGeometry(2, CHAR_H, 1),
+            new THREE.MeshStandardMaterial({ color: 0xA3A2A5 })
         );
+        character.position.set(0, CHAR_H / 2, 0);
+        scene.add(character);
 
-        // look at upper body, not feet
+        scene.add(new THREE.HemisphereLight(0xffffff, 0x1C4A1A, 1.0));
 
-        camera.lookAt(
+        let yaw = -Math.PI / 4, pitch = -Math.PI / 8;
+        let zoom = 15;
+        let velY = 0;
+        let isGrounded = true;
+        let isShiftLock = false;
+        const keys = { w: false, a: false, s: false, d: false, ' ': false };
+        let isRightMouseDown = false;
 
-            playerPos.x,
+        window.addEventListener('mousedown', e => { if (e.button === 2) isRightMouseDown = true; });
+        window.addEventListener('mouseup', e => { if (e.button === 2) isRightMouseDown = false; });
+        window.addEventListener('mousemove', e => {
+            if (isRightMouseDown || document.pointerLockElement === renderer.domElement) {
+                yaw -= e.movementX * 0.005;
+                pitch -= e.movementY * 0.005;
+                pitch = Math.max(-Math.PI / 2.01, Math.min(Math.PI / 2.01, pitch));
+            }
+        });
+        window.addEventListener('wheel', e => {
+            let oldZoom = zoom;
+            zoom = Math.max(0, Math.min(100, zoom + (e.deltaY > 0 ? 2 : -2)));
+            
+            if (zoom <= 0.5 && oldZoom > 0.5) {
+                renderer.domElement.requestPointerLock();
+            } else if (zoom > 0.5 && oldZoom <= 0.5 && !isShiftLock) {
+                document.exitPointerLock();
+            }
+        });
 
-            playerPos.y + PLAYER_HEIGHT * 0.6,
+        document.addEventListener('pointerlockchange', () => {
+            if (document.pointerLockElement !== renderer.domElement) {
+                if (zoom <= 0.5) {
+                    zoom = 2;
+                }
+                isShiftLock = false;
+            }
+        });
 
-            playerPos.z
+        window.addEventListener('keydown', e => { 
+            const k = e.key.toLowerCase();
+            if (k === 'shift') {
+                isShiftLock = !isShiftLock;
+                if (isShiftLock) {
+                    renderer.domElement.requestPointerLock();
+                } else if (zoom > 0.5) {
+                    document.exitPointerLock();
+                }
+            }
+            if (k in keys) keys[k] = true; 
+        });
+        window.addEventListener('keyup', e => { 
+            const k = e.key.toLowerCase();
+            if (k in keys) keys[k] = false; 
+        });
+        window.addEventListener('contextmenu', e => e.preventDefault());
 
-        );
+        const clock = new THREE.Clock();
 
-    }
+        function update() {
+            const dt = clock.getDelta();
 
-
-
-    // set initial camera right away so first frame is correct
-
-    placeCamera();
-
-
-
-    // ── update ────────────────────────────────────────────────
-
-    function update() {
-
-        if (playerMode) {
-
-            // forward = from camera toward player on XZ plane
-
-            // camera is at +sin(camYaw) relative to player, so forward into scene = -sin(camYaw)
-
-            const fwdX = -Math.sin(camYaw);
-
-            const fwdZ = -Math.cos(camYaw);
-
-            const rgtX =  Math.cos(camYaw);
-
-            const rgtZ = -Math.sin(camYaw);
-
-
-
-            let dx = 0, dz = 0;
-
-            if (keys.w) { dx += fwdX; dz += fwdZ; }
-
-            if (keys.s) { dx -= fwdX; dz -= fwdZ; }
-
-            if (keys.a) { dx -= rgtX; dz -= rgtZ; }
-
-            if (keys.d) { dx += rgtX; dz += rgtZ; }
-
-
-
-            const len = Math.sqrt(dx * dx + dz * dz);
-
-            if (len > 0) {
-
-                dx /= len; dz /= len;
-
-                playerPos.x += dx * PLAYER_SPEED;
-
-                playerPos.z += dz * PLAYER_SPEED;
-
-                playerYaw = Math.atan2(dx, dz) + modelFacingOffset;
-
+            if (!isGrounded) {
+                velY += GRAVITY * dt;
+                character.position.y += velY * dt;
+                if (character.position.y <= CHAR_H / 2) {
+                    character.position.y = CHAR_H / 2;
+                    velY = 0;
+                    isGrounded = true;
+                }
+            }
+            if (keys[' '] && isGrounded) {
+                velY = JUMP_POWER;
+                isGrounded = false;
             }
 
+            const moveDir = new THREE.Vector3();
+            const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+            const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
 
+            if (keys.w) moveDir.sub(forward);
+            if (keys.s) moveDir.add(forward);
+            if (keys.a) moveDir.sub(right);
+            if (keys.d) moveDir.add(right);
 
-            const half = BP_SIZE / 2;
+            const isFP = zoom <= 0.5;
 
-            playerPos.x = Math.max(-half, Math.min(half, playerPos.x));
+            // Toggle Shift Lock Cursor Visibility
+            shiftLockIcon.style.display = (isShiftLock && !isFP) ? 'block' : 'none';
 
-            playerPos.z = Math.max(-half, Math.min(half, playerPos.z));
-
-
-
-            if (playerModel) {
-
-                playerModel.position.x = playerPos.x;
-
-                playerModel.position.z = playerPos.z;
-
-                playerModel.rotation.y = playerYaw;
-
+            if (moveDir.length() > 0) {
+                moveDir.normalize();
+                character.position.x += moveDir.x * WALK_SPEED * dt;
+                character.position.z += moveDir.z * WALK_SPEED * dt;
+                
+                if (!isFP && !isShiftLock) {
+                    const targetRot = Math.atan2(moveDir.x, moveDir.z);
+                    let diff = targetRot - character.rotation.y;
+                    while (diff < -Math.PI) diff += Math.PI * 2;
+                    while (diff > Math.PI) diff -= Math.PI * 2;
+                    character.rotation.y += diff * 0.45; 
+                }
             }
 
+            character.visible = !isFP;
 
+            if (isFP || isShiftLock) {
+                character.rotation.y = yaw + Math.PI;
+            }
 
-            placeCamera();
+            const camX = Math.sin(yaw) * Math.cos(pitch) * zoom;
+            const camY = -Math.sin(pitch) * zoom;
+            const camZ = Math.cos(yaw) * Math.cos(pitch) * zoom;
+            const eyeLevel = 1.8; 
 
+            let targetX = character.position.x;
+            let targetY = character.position.y + eyeLevel;
+            let targetZ = character.position.z;
 
+            if (isShiftLock && !isFP) {
+                targetX += right.x * 1.75;
+                targetZ += right.z * 1.75;
+            }
 
-        } else {
+            camera.position.set(
+                targetX + camX,
+                targetY + camY,
+                targetZ + camZ
+            );
 
-            camera.rotation.order = 'YXZ';
-
-            camera.rotation.set(freePitch, freeYaw, 0);
-
-            const speed = 1.5;
-
-            const dir = new THREE.Vector3();
-
-            const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-
-            const rgt = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-
-            if (keys.w) dir.add(fwd);
-
-            if (keys.s) dir.sub(fwd);
-
-            if (keys.a) dir.sub(rgt);
-
-            if (keys.d) dir.add(rgt);
-
-            if (keys.e) camera.position.y += speed;
-
-            if (keys.q) camera.position.y -= speed;
-
-            if (dir.length() > 0) camera.position.addScaledVector(dir.normalize(), speed);
-
+            if (isFP) {
+                const fpLook = new THREE.Vector3(
+                    camera.position.x - Math.sin(yaw) * Math.cos(pitch),
+                    camera.position.y + Math.sin(pitch),
+                    camera.position.z - Math.cos(yaw) * Math.cos(pitch)
+                );
+                camera.lookAt(fpLook);
+            } else {
+                camera.lookAt(targetX, targetY, targetZ);
+            }
         }
 
-    }
+        function animate() {
+            requestAnimationFrame(animate);
+            update();
+            renderer.render(scene, camera);
+        }
 
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
 
-
-    function animate() { requestAnimationFrame(animate); update(); renderer.render(scene, camera); }
-
-
-
-    window.addEventListener('resize', () => {
-
-        camera.aspect = window.innerWidth / window.innerHeight;
-
-        camera.updateProjectionMatrix();
-
-        renderer.setSize(window.innerWidth, window.innerHeight);
-
-    });
-
-
-
-    animate();
-
-</script>
-
+        animate();
+    </script>
 </body>
-
 </html>
